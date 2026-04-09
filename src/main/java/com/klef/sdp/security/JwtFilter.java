@@ -35,20 +35,19 @@ public class JwtFilter extends OncePerRequestFilter
         String path = request.getServletPath();
 
         List<String> publicPaths = List.of(
-                "/auth",
-                "/swagger-ui",
-                "/v3/api-docs",
-                "/swagger-ui.html",
+        	    "/auth",
+        	    "/swagger-ui",
+        	    "/v3/api-docs",
+        	    "/swagger-ui.html",
 
-                // ✅ ADMIN APIs should be public
-                "/adminapi",
+        	    "/adminapi",
 
-                // ✅ login/register APIs
-                "/artistapi/login",
-                "/visitorapi/login",
-                "/visitorapi/register"
-        );
+        	    "/artistapi/login",
 
+        	    "/visitorapi/login",
+        	    "/visitorapi/register",
+        	    "/visitorapi/viewartworks" // ✅ ADD THIS
+        	);
         boolean isPublic = publicPaths.stream().anyMatch(path::startsWith);
 
         if (isPublic) 
