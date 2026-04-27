@@ -29,8 +29,9 @@ public class VisitorController
    @PostMapping("/login")
    public ResponseEntity<?> login(@RequestBody Visitor visitor)
    {
+      String loginIdentifier = (visitor.getUsername() != null && !visitor.getUsername().isEmpty()) ? visitor.getUsername() : visitor.getEmail();
       Visitor v = visitorService.verifyVisitorLogin(
-            visitor.getUsername(),
+            loginIdentifier,
             visitor.getPassword()
       );
 

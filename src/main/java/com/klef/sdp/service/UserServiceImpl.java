@@ -31,6 +31,8 @@ public class UserServiceImpl implements UserService
     @Override
     public UserDetails loadUserByUsername(String input) throws UsernameNotFoundException 
     {
+        boolean isEmail = input.contains("@");
+
         // Admin
         Optional<Admin> adminOpt = adminRepo.findByUsername(input);
         if (adminOpt.isPresent()) 
@@ -44,7 +46,7 @@ public class UserServiceImpl implements UserService
         }
 
         // Artist
-        Optional<Artist> artistOpt = artistRepo.findByUsername(input);
+        Optional<Artist> artistOpt = isEmail ? artistRepo.findByEmail(input) : artistRepo.findByUsername(input);
         if (artistOpt.isPresent()) 
         {
             Artist artist = artistOpt.get();
@@ -56,7 +58,7 @@ public class UserServiceImpl implements UserService
         }
 
         // Visitor
-        Optional<Visitor> visitorOpt = visitorRepo.findByUsername(input);
+        Optional<Visitor> visitorOpt = isEmail ? visitorRepo.findByEmail(input) : visitorRepo.findByUsername(input);
         if (visitorOpt.isPresent()) 
         {
             Visitor visitor = visitorOpt.get();
@@ -73,24 +75,75 @@ public class UserServiceImpl implements UserService
     @Override
     public Object getUserByLogin(String input) 
     {
+        boolean isEmail = input.contains("@");
+
         Optional<Admin> adminOpt = adminRepo.findByUsername(input);
         if (adminOpt.isPresent()) 
         {
             return adminOpt.get();
         }
 
-        Optional<Artist> artistOpt = artistRepo.findByUsername(input);
+        Optional<Artist> artistOpt = isEmail ? artistRepo.findByEmail(input) : artistRepo.findByUsername(input);
         if (artistOpt.isPresent()) 
         {
             return artistOpt.get();
         }
 
-        Optional<Visitor> visitorOpt = visitorRepo.findByUsername(input);
+        Optional<Visitor> visitorOpt = isEmail ? visitorRepo.findByEmail(input) : visitorRepo.findByUsername(input);
         if (visitorOpt.isPresent()) 
         {
             return visitorOpt.get();
         }
 
+        return null;
+    }
+
+    @Override
+    public UserDetails loadUserByUsernameAndRole(String input, String role) throws UsernameNotFoundException 
+    {
+        boolean isEmail = input.contains("@");
+
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            Optional<Admin> adminOpt = adminRepo.findByUsername(input);
+            if (adminOpt.isPresent()) {
+                Admin admin = adminOpt.get();
+                return new org.springframework.security.core.userdetails.User(
+                        admin.getUsername(), admin.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+            }
+        } else if ("ARTIST".equalsIgnoreCase(role)) {
+            Optional<Artist> artistOpt = isEmail ? artistRepo.findByEmail(input) : artistRepo.findByUsername(input);
+            if (artistOpt.isPresent()) {
+                Artist artist = artistOpt.get();
+                return new org.springframework.security.core.userdetails.User(
+                        artist.getUsername(), artist.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_ARTIST")));
+            }
+        } else if ("VISITOR".equalsIgnoreCase(role)) {
+            Optional<Visitor> visitorOpt = isEmail ? visitorRepo.findByEmail(input) : visitorRepo.findByUsername(input);
+            if (visitorOpt.isPresent()) {
+                Visitor visitor = visitorOpt.get();
+                return new org.springframework.security.core.userdetails.User(
+                        visitor.getUsername(), visitor.getPassword(), List.of(new SimpleGrantedAuthority("ROLE_VISITOR")));
+            }
+        }
+
+        throw new UsernameNotFoundException("User not found with input: " + input + " for role: " + role);
+    }
+
+    @Override
+    public Object getUserByLoginAndRole(String input, String role) 
+    {
+        boolean isEmail = input.contains("@");
+
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            Optional<Admin> adminOpt = adminRepo.findByUsername(input);
+            if (adminOpt.isPresent()) return adminOpt.get();
+        } else if ("ARTIST".equalsIgnoreCase(role)) {
+            Optional<Artist> artistOpt = isEmail ? artistRepo.findByEmail(input) : artistRepo.findByUsername(input);
+            if (artistOpt.isPresent()) return artistOpt.get();
+        } else if ("VISITOR".equalsIgnoreCase(role)) {
+            Optional<Visitor> visitorOpt = isEmail ? visitorRepo.findByEmail(input) : visitorRepo.findByUsername(input);
+            if (visitorOpt.isPresent()) return visitorOpt.get();
+        }
         return null;
     }
 }

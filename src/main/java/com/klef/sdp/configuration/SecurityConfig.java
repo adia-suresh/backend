@@ -25,8 +25,8 @@ import com.klef.sdp.service.UserService;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig 
-{
+public class SecurityConfig {
+
     @Autowired
     private JwtFilter jwtFilter;
 
@@ -34,80 +34,61 @@ public class SecurityConfig
     private UserService userService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception 
-    {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> {})
-            .csrf(csrf -> csrf.disable())
-            .authenticationProvider(authenticationProvider())
-            .authorizeHttpRequests(auth -> auth
-
-                // Swagger
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui.html"
-                ).permitAll()
-
-                // Public Login/Register APIs
-                .requestMatchers(
-                    "/adminapi/login",
-                    "/artistapi/login",
-                    "/visitorapi/login",
-                    "/visitorapi/register"
-                ).permitAll()
-
-                // ADMIN APIs
-                .requestMatchers("/adminapi/**").permitAll()
-
-                // ARTIST APIs
-                .requestMatchers("/artistapi/**").permitAll()
-
-                // VISITOR APIs
-                .requestMatchers("/visitorapi/**").permitAll()
-
-                // Everything else
-                .anyRequest().permitAll()
-            )
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authenticationProvider(authenticationProvider())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/auth/**",
+                                "/customerapi/**",
+                                "/demoapi/**",
+                                "/adminapi/**",
+                                "/artistapi/**",
+                                "/visitorapi/**",
+                                "/files/download/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean 
-    public AuthenticationProvider authenticationProvider() 
-    { 
+    @Bean
+    @SuppressWarnings("deprecation")
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userService);
         provider.setPasswordEncoder(passwordEncoder());
-        return provider; 
+        return provider;
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() 
-    {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception
-    {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() 
-    {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
-            "http://localhost:2001",
-            "http://localhost:2000"
-        ));
-        
+                "http://localhost:5173",
+                "http://localhost:2000",
+                "http://localhost:2001",
+                "http://localhost:2002",
+                "http://localhost:2003"));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

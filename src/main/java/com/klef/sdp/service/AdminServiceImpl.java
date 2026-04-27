@@ -3,6 +3,7 @@ package com.klef.sdp.service;
 import java.util.List;
 import java.util.Optional;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class AdminServiceImpl implements AdminService
    @Override
    public Admin verifyAdminLogin(String username, String password)
    {
-       Optional<Admin> adminOpt = adminRepository.findById(username);
+       Optional<Admin> adminOpt = adminRepository.findById(java.util.Objects.requireNonNull(username));
 
        if (adminOpt.isPresent())
        {
@@ -111,7 +112,7 @@ public class AdminServiceImpl implements AdminService
    @Override
    public String addArtwork(Artwork artwork) 
    {
-      artworkRepository.save(artwork);
+      artworkRepository.save(java.util.Objects.requireNonNull(artwork));
       return "Artwork Added Successfully";
    }
 

@@ -31,7 +31,8 @@ public class ArtistServiceImpl implements ArtistService
    @Override
    public Artist verifyArtistLogin(String username, String password) 
    {
-      Artist artist = artistRepository.findByUsername(username).orElse(null);
+      boolean isEmail = username != null && username.contains("@");
+      Artist artist = isEmail ? artistRepository.findByEmail(username).orElse(null) : artistRepository.findByUsername(username).orElse(null);
 
       if (artist != null && passwordEncoder.matches(password, artist.getPassword()))
       {

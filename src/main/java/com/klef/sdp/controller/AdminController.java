@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.klef.sdp.entity.*;
-import com.klef.sdp.repository.BookingRepository;
 import com.klef.sdp.service.AdminService;
 
 @RestController
@@ -18,8 +17,6 @@ public class AdminController
    @Autowired
    private AdminService adminService;
    
-   @Autowired
-   private BookingRepository bookingRepository;
 
    @PostMapping("/login")
    public ResponseEntity<?> adminLogin(@RequestBody Admin admin)

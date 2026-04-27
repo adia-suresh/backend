@@ -41,7 +41,8 @@ public class VisitorServiceImpl implements VisitorService
    @Override
    public Visitor verifyVisitorLogin(String username, String password) 
    {
-      Visitor visitor = visitorRepository.findByUsername(username).orElse(null);
+      boolean isEmail = username != null && username.contains("@");
+      Visitor visitor = isEmail ? visitorRepository.findByEmail(username).orElse(null) : visitorRepository.findByUsername(username).orElse(null);
 
       if (visitor != null && passwordEncoder.matches(password, visitor.getPassword()))
       {

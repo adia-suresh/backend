@@ -32,8 +32,9 @@ public class ArtistController
    @PostMapping("/login")
    public Object login(@RequestBody Artist artist)
    {
+      String loginIdentifier = (artist.getUsername() != null && !artist.getUsername().isEmpty()) ? artist.getUsername() : artist.getEmail();
       Artist a = artistService.verifyArtistLogin(
-            artist.getUsername(),
+            loginIdentifier,
             artist.getPassword()
       );
 

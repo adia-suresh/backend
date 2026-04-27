@@ -1,5 +1,7 @@
 package com.klef.sdp.security;
 
+import org.springframework.lang.NonNull;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -19,8 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-public class JwtFilter extends OncePerRequestFilter 
-{
+public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -28,79 +29,65 @@ public class JwtFilter extends OncePerRequestFilter
     private UserService service;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException 
-    {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain)
+            throws ServletException, IOException {
         String path = request.getServletPath();
 
         List<String> publicPaths = List.of(
-        	    "/auth",
-        	    "/swagger-ui",
-        	    "/v3/api-docs",
-        	    "/swagger-ui.html",
+                "/auth",
+                "/auth/",
+                "/swagger-ui",
+                "/v3/api-docs",
+                "/swagger-ui.html",
+                "/adminapi",
+                "/artistapi",
+                "/visitorapi");
 
-        	    "/adminapi",
+        boolean isPublic = publicPaths.stream().anyMatch(path::contains);
 
-        	    "/artistapi/login",
-
-        	    "/visitorapi/login",
-        	    "/visitorapi/register",
-        	    "/visitorapi/viewartworks" // ✅ ADD THIS
-        	);
-        boolean isPublic = publicPaths.stream().anyMatch(path::startsWith);
-
-        if (isPublic) 
-        {
+        if (isPublic) {
             chain.doFilter(request, response);
             return;
         }
 
         String header = request.getHeader("Authorization");
 
-        if (header == null || !header.startsWith("Bearer ")) 
-        {
-            sendErrorResponse(response, 401, "Authorization header is missing or must start with 'Bearer '");
+        if (header == null || !header.startsWith("Bearer ")) {
+            sendErrorResponse(response, 401, "Authorization header missing or invalid");
             return;
         }
 
         String token = header.substring(7).trim();
 
-        try 
-        {
+        try {
             String username = jwtUtil.extractUsername(token);
 
-            if (username == null) 
-            {
-                sendErrorResponse(response, 401, "Invalid token: Username could not be extracted");
+            if (username == null) {
+                sendErrorResponse(response, 401, "Invalid token");
                 return;
             }
 
-            if (SecurityContextHolder.getContext().getAuthentication() == null) 
-            {
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = service.loadUserByUsername(username);
 
-                if (userDetails != null && jwtUtil.validateToken(token, userDetails)) 
-                {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+                if (jwtUtil.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                } 
-                else 
-                {
-                    sendErrorResponse(response, 401, "Invalid or expired token");
+                } else {
+                    sendErrorResponse(response, 401, "Token expired or invalid");
                     return;
                 }
             }
-        } 
-        catch (Exception e) 
-        {
+        } catch (Exception e) {
             sendErrorResponse(response, 401, "Invalid token: " + e.getMessage());
             return;
         }
@@ -108,17 +95,12 @@ public class JwtFilter extends OncePerRequestFilter
         chain.doFilter(request, response);
     }
 
-    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException 
-    {
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        String error = (status == 401) ? "Unauthorized" : "Forbidden";
-
-        String jsonResponse = "{\"error\":\"" + error + "\",\"message\":\"" + message + "\"}";
-
+        String jsonResponse = "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}";
         response.getWriter().write(jsonResponse);
-        response.getWriter().flush();
     }
 }
