@@ -1,9 +1,7 @@
 package com.klef.sdp.security;
 
 import org.springframework.lang.NonNull;
-
 import java.io.IOException;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -29,25 +28,15 @@ public class JwtFilter extends OncePerRequestFilter {
     private UserService service;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain chain)
             throws ServletException, IOException {
+
         String path = request.getServletPath();
 
-        List<String> publicPaths = List.of(
-                "/auth",
-                "/auth/",
-                "/swagger-ui",
-                "/v3/api-docs",
-                "/swagger-ui.html",
-                "/adminapi",
-                "/artistapi",
-                "/visitorapi");
-
-        boolean isPublic = publicPaths.stream().anyMatch(path::contains);
-
-        if (isPublic) {
+        if (path.startsWith("/auth")) {
             chain.doFilter(request, response);
             return;
         }
@@ -55,7 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
-            sendErrorResponse(response, 401, "Authorization header missing or invalid");
+            chain.doFilter(request, response);
             return;
         }
 
@@ -64,43 +53,33 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             String username = jwtUtil.extractUsername(token);
 
-            if (username == null) {
-                sendErrorResponse(response, 401, "Invalid token");
-                return;
-            }
+            if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = service.loadUserByUsername(username);
 
                 if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities());
+
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities());
 
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request));
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                } else {
-                    sendErrorResponse(response, 401, "Token expired or invalid");
-                    return;
                 }
             }
+
         } catch (Exception e) {
-            sendErrorResponse(response, 401, "Invalid token: " + e.getMessage());
+            response.setStatus(401);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Invalid token\"}");
             return;
         }
 
         chain.doFilter(request, response);
-    }
-
-    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        String jsonResponse = "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}";
-        response.getWriter().write(jsonResponse);
     }
 }
