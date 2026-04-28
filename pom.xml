@@ -16,6 +16,7 @@
     <groupId>com.klef.springboot</groupId>
     <artifactId>SpringBootSDPBackendProject</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>SpringBootSDPBackendProject</name>
     <description>Spring Boot Backend for SDP</description>
 
