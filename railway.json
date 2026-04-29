@@ -1,9 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "buildCommand": "./mvnw clean package -DskipTests"
   },
   "deploy": {
-    "startCommand": "SERVER_PORT=$PORT java -Djava.net.preferIPv4Stack=true -Dserver.address=0.0.0.0 -jar target/SpringBootSDPBackendProject-0.0.1-SNAPSHOT.jar"
+    "startCommand": "java -Dserver.port=$PORT -Djava.net.preferIPv4Stack=true -Dserver.address=0.0.0.0 -jar target/SpringBootSDPBackendProject-0.0.1-SNAPSHOT.jar",
+    "restartPolicyType": "ON_FAILURE"
   }
 }
