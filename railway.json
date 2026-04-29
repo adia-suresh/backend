@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "java -Dserver.port=$PORT -jar target/*SNAPSHOT.jar",
+    "startCommand": "java -Djava.net.preferIPv4Stack=true -Dserver.port=$PORT -jar target/*SNAPSHOT.jar",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
