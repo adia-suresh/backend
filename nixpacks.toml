@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["jdk17"]
+
+[phases.build]
+cmds = ["chmod +x mvnw", "./mvnw clean package -DskipTests"]
+
+[start]
+cmd = "java -Dserver.port=$PORT -Djava.net.preferIPv4Stack=true -Dserver.address=0.0.0.0 -jar target/*.jar"
